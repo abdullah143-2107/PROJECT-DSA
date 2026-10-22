@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Header Corruptor</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Fira Code & Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#121212',
+                        cardBg: '#1a1a1a',
+                        borderDark: '#282828',
+                        neonGreen: '#00ff66',
+                        neonGreenDark: '#00cc55',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(0, 255, 102, 0.05) 0%, transparent 60%),
+                linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 30px 30px, 30px 30px;
+        }
+
+        .glow-button {
+            box-shadow: 0 0 15px rgba(0, 255, 102, 0.25);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .glow-button:hover:not(:disabled) {
+            box-shadow: 0 0 25px rgba(0, 255, 102, 0.55);
+            transform: translateY(-1px);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #141414;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #2a2a2a;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #00ff66;
+        }
+
+        .hex-byte-diff {
+            color: #ff4444;
+            font-weight: bold;
+            background-color: rgba(255, 68, 68, 0.15);
+        }
+
+        .hex-byte-orig {
+            color: #00ff66;
+            font-weight: bold;
+            background-color: rgba(0, 255, 102, 0.15);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans antialiased selection:bg-neonGreen selection:text-black">
+
+    <!-- Header -->
+    <header class="border-b border-borderDark bg-cardBg/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-lg bg-neonGreen/10 border border-neonGreen/40 flex items-center justify-center text-neonGreen font-mono font-bold text-lg">
+                    <i class="fa-solid fa-file-circle-xmark"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                        PDF Header Corruptor
+                    </h1>
+                    <p class="text-xs text-gray-400">Minimalist Binary Header Invalidation Utility</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-mono bg-emerald-950 text-neonGreen border border-neonGreen/30">
+                    <span class="w-1.5 h-1.5 rounded-full bg-neonGreen mr-2 animate-pulse"></span> Header Damage Method
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-8 space-y-6">
+
+        <!-- Interactive Processing Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- File Upload & Actions Panel -->
+            <div class="lg:col-span-5 space-y-5">
+                <div class="bg-cardBg border border-borderDark rounded-xl p-6 shadow-xl flex flex-col justify-between h-full">
+                    <div>
+                        <h2 class="text-white font-medium text-sm mb-4 flex items-center justify-between">
+                            <span>Upload PDF File</span>
+                            <span class="text-xs text-gray-500 font-mono">.pdf only</span>
+                        </h2>
+
+                        <!-- Drop Zone -->
+                        <div id="drop-zone" class="border-2 border-dashed border-borderDark hover:border-neonGreen/60 transition-all duration-200 rounded-xl p-8 text-center cursor-pointer bg-black/30 group relative overflow-hidden">
+                            <input type="file" id="file-input" accept=".pdf" class="hidden">
+                            
+                            <div class="space-y-3 pointer-events-none">
+                                <div class="w-14 h-14 mx-auto rounded-full bg-neonGreen/5 border border-neonGreen/20 flex items-center justify-center text-neonGreen group-hover:scale-110 group-hover:bg-neonGreen/10 transition-all">
+                                    <i class="fa-solid fa-cloud-arrow-up text-2xl"></i>
+                                </div>
+                                <div class="space-y-1">
+                                    <p class="text-sm font-medium text-gray-200 group-hover:text-neonGreen transition-colors">
+                                        Drag & drop PDF here
+                                    </p>
+                                    <p class="text-xs text-gray-500">
+                                        or <span class="text-neonGreen underline">browse device</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Selected File Status Badge -->
+                        <div id="file-info" class="hidden mt-4 p-3 rounded-lg bg-black/40 border border-borderDark font-mono text-xs space-y-2">
+                            <div class="flex items-center justify-between text-gray-300">
+                                <span class="truncate max-w-[180px] font-semibold text-white" id="file-name">filename.pdf</span>
+                                <span class="text-gray-500" id="file-size">0 KB</span>
+                            </div>
+                            <div class="flex items-center justify-between text-[11px] text-gray-400 border-t border-borderDark/60 pt-2">
+                                <span>Status: <span class="text-neonGreen" id="file-status">Loaded in memory</span></span>
+                                <button id="remove-file" class="text-red-400 hover:text-red-300 transition-colors">
+                                    <i class="fa-solid fa-xmark"></i> Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Controls -->
+                    <div class="mt-6 pt-6 border-t border-borderDark/80 space-y-3">
+                        <button id="corrupt-btn" disabled class="w-full bg-neonGreen text-black font-semibold py-3 px-4 rounded-lg glow-button disabled:opacity-30 disabled:cursor-not-allowed disabled:shadow-none transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-bolt-lightning"></i>
+                            <span>Corrupt Header (%PDF- &rarr; %CORR)</span>
+                        </button>
+
+                        <button id="download-btn" disabled class="w-full bg-cardBg border border-neonGreen/40 text-neonGreen hover:bg-neonGreen/10 font-medium py-3 px-4 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-download"></i>
+                            <span>Download Damaged PDF</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hex Visualization & Execution Log -->
+            <div class="lg:col-span-7">
+                <div class="bg-cardBg border border-borderDark rounded-xl p-6 shadow-xl h-full flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-white font-medium text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-terminal text-neonGreen"></i>
+                                <span>Header Byte Stream Preview</span>
+                            </h2>
+                            <span class="text-[11px] font-mono text-gray-500">Offset 0x00000000</span>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div id="hex-empty" class="h-60 border border-borderDark/60 rounded-lg bg-black/40 flex flex-col items-center justify-center text-center p-6 text-gray-500 space-y-2">
+                            <i class="fa-solid fa-microchip text-3xl text-gray-600"></i>
+                            <p class="text-sm">Upload a PDF to view original and damaged header bytes.</p>
+                        </div>
+
+                        <!-- Active Hex Displays -->
+                        <div id="hex-container" class="hidden space-y-4">
+                            <!-- Original Header -->
+                            <div>
+                                <div class="flex items-center justify-between text-xs font-mono text-gray-400 mb-1.5">
+                                    <span class="text-neonGreen">Original Header Signature:</span>
+                                    <span id="orig-header-text" class="text-gray-500 font-mono">--</span>
+                                </div>
+                                <div id="orig-hex-dump" class="font-mono text-xs bg-black/60 border border-borderDark rounded-lg p-3 text-gray-300 overflow-x-auto custom-scrollbar leading-relaxed">
+                                </div>
+                            </div>
+
+                            <!-- Corrupted Header -->
+                            <div>
+                                <div class="flex items-center justify-between text-xs font-mono text-gray-400 mb-1.5">
+                                    <span class="text-red-400">Corrupted Header Signature:</span>
+                                    <span id="corr-header-text" class="text-gray-500 font-mono">--</span>
+                                </div>
+                                <div id="corr-hex-dump" class="font-mono text-xs bg-black/60 border border-borderDark rounded-lg p-3 text-gray-300 overflow-x-auto custom-scrollbar leading-relaxed">
+                                    <span class="text-gray-600 italic">Click "Corrupt Header" to process data...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Log Output Box -->
+                    <div class="mt-4 pt-3 border-t border-borderDark/60">
+                        <div class="text-[11px] font-mono text-gray-500 uppercase tracking-wider mb-1">Execution Log</div>
+                        <div id="console-log" class="font-mono text-xs bg-black/80 rounded border border-borderDark/80 p-2.5 h-20 overflow-y-auto custom-scrollbar text-gray-400 space-y-1">
+                            <div class="text-gray-600">&gt; System initialized. Awaiting PDF document input...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-borderDark bg-black/40 py-5 mt-auto text-center text-xs text-gray-500">
+        <p>PDF Header Corruptor • Minimalist JavaScript Binary Manipulation Tool</p>
+    </footer>
+
+    <!-- Notification Toast Container -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-cardBg border border-neonGreen text-white px-4 py-3 rounded-lg shadow-2xl flex items-center space-x-3 pointer-events-none">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-neonGreen"></i>
+        <span id="toast-msg" class="text-xs font-mono">Notification message</span>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // DOM Elements
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileInfo = document.getElementById('file-info');
+        const fileNameEl = document.getElementById('file-name');
+        const fileSizeEl = document.getElementById('file-size');
+        const fileStatusEl = document.getElementById('file-status');
+        const removeFileBtn = document.getElementById('remove-file');
+        
+        const corruptBtn = document.getElementById('corrupt-btn');
+        const downloadBtn = document.getElementById('download-btn');
+
+        const hexEmpty = document.getElementById('hex-empty');
+        const hexContainer = document.getElementById('hex-container');
+        const origHexDump = document.getElementById('orig-hex-dump');
+        const corrHexDump = document.getElementById('corr-hex-dump');
+        const origHeaderText = document.getElementById('orig-header-text');
+        const corrHeaderText = document.getElementById('corr-header-text');
+        const consoleLog = document.getElementById('console-log');
+
+        // State Variables
+        let currentFile = null;
+        let originalArrayBuffer = null;
+        let corruptedUint8Array = null;
+
+        // Logging Helper
+        function addLog(msg, type = 'info') {
+            const time = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const entry = document.createElement('div');
+            
+            if (type === 'success') {
+                entry.className = 'text-neonGreen';
+                entry.innerHTML = `<span class="text-gray-600">[${time}]</span> [+] ${msg}`;
+            } else if (type === 'error') {
+                entry.className = 'text-red-400';
+                entry.innerHTML = `<span class="text-gray-600">[${time}]</span> [-] ${msg}`;
+            } else {
+                entry.className = 'text-gray-300';
+                entry.innerHTML = `<span class="text-gray-600">[${time}]</span> &gt; ${msg}`;
+            }
+            
+            consoleLog.appendChild(entry);
+            consoleLog.scrollTop = consoleLog.scrollHeight;
+        }
+
+        // Toast Notification Helper
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-msg');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMsg.textContent = message;
+            if (isError) {
+                toast.classList.remove('border-neonGreen');
+                toast.classList.add('border-red-500');
+                toastIcon.className = 'fa-solid fa-circle-exclamation text-red-500';
+            } else {
+                toast.classList.remove('border-red-500');
+                toast.classList.add('border-neonGreen');
+                toastIcon.className = 'fa-solid fa-circle-check text-neonGreen';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // Convert Buffer to Hex + ASCII String
+        function formatHexDump(buffer, length = 32, highlightRange = null) {
+            const uint8 = new Uint8Array(buffer.slice(0, length));
+            let hexParts = [];
+            let asciiParts = [];
+
+            for (let i = 0; i < uint8.length; i++) {
+                const byte = uint8[i];
+                const hex = byte.toString(16).padStart(2, '0').toUpperCase();
+                
+                // Highlight modified range
+                if (highlightRange && i >= highlightRange.start && i < highlightRange.end) {
+                    hexParts.push(`<span class="${highlightRange.type === 'orig' ? 'hex-byte-orig' : 'hex-byte-diff'}">${hex}</span>`);
+                } else {
+                    hexParts.push(hex);
+                }
+
+                // Printable ASCII representation
+                if (byte >= 32 && byte <= 126) {
+                    asciiParts.push(String.fromCharCode(byte));
+                } else {
+                    asciiParts.push('.');
+                }
+            }
+
+            return `0x00000000:  ${hexParts.join(' ')}\nASCII:       ${asciiParts.join('')}`;
+        }
+
+        // File Selection Handler
+        function handleFile(file) {
+            if (!file) return;
+            if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
+                showToast('Please upload a valid PDF document.', true);
+                addLog('File selection rejected: Not a PDF file.', 'error');
+                return;
+            }
+
+            currentFile = file;
+            fileNameEl.textContent = file.name;
+            fileSizeEl.textContent = (file.size / 1024).toFixed(1) + ' KB';
+            fileStatusEl.textContent = 'Loaded in memory';
+            fileStatusEl.className = 'text-neonGreen';
+            
+            fileInfo.classList.remove('hidden');
+            corruptBtn.disabled = false;
+            downloadBtn.disabled = true;
+            corruptedUint8Array = null;
+
+            addLog(`Loaded file: "${file.name}" (${file.size} bytes)`, 'info');
+
+            // Read original file header for inspection
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                originalArrayBuffer = e.target.result;
+                const uint8 = new Uint8Array(originalArrayBuffer);
+                
+                // Check Header string
+                let headerStr = '';
+                for (let i = 0; i < Math.min(10, uint8.length); i++) {
+                    headerStr += String.fromCharCode(uint8[i]);
+                }
+                
+                origHeaderText.textContent = `"${headerStr.trim()}"`;
+                corrHeaderText.textContent = '--';
+
+                // Display Hex Dump
+                origHexDump.innerHTML = formatHexDump(originalArrayBuffer, 32);
+                corrHexDump.innerHTML = '<span class="text-gray-600 italic">Awaiting corruption trigger...</span>';
+                
+                hexEmpty.classList.add('hidden');
+                hexContainer.classList.remove('hidden');
+                addLog('Extracted initial magic bytes for visualization.', 'info');
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Pure JS Header Corruption Logic (%PDF- -> %CORR)
+        function corruptHeader() {
+            if (!originalArrayBuffer) return;
+
+            // Clone original array buffer
+            corruptedUint8Array = new Uint8Array(originalArrayBuffer.slice(0));
+
+            // ASCII values for "%CORR": % = 37, C = 67, O = 79, R = 82, R = 82
+            const corruptBytes = [37, 67, 79, 82, 82]; 
+            
+            for (let i = 0; i < corruptBytes.length && i < corruptedUint8Array.length; i++) {
+                corruptedUint8Array[i] = corruptBytes[i];
+            }
+
+            // Extract new corrupted header text
+            let corrHeaderStr = '';
+            for (let i = 0; i < Math.min(10, corruptedUint8Array.length); i++) {
+                corrHeaderStr += String.fromCharCode(corruptedUint8Array[i]);
+            }
+
+            // Render Diff Visualization
+            origHexDump.innerHTML = formatHexDump(originalArrayBuffer, 32, { start: 0, end: 5, type: 'orig' });
+            corrHexDump.innerHTML = formatHexDump(corruptedUint8Array.buffer, 32, { start: 0, end: 5, type: 'diff' });
+            corrHeaderText.textContent = `"${corrHeaderStr.trim()}"`;
+
+            // Update UI State
+            downloadBtn.disabled = false;
+            fileStatusEl.textContent = 'Header Corrupted!';
+            fileStatusEl.className = 'text-red-400 font-semibold';
+
+            addLog('Applied header damage: Bytes [0..4] overwritten with %CORR.', 'success');
+            showToast('PDF Header corrupted successfully!');
+        }
+
+        // Trigger Download of Damaged PDF
+        function downloadCorruptedFile() {
+            if (!corruptedUint8Array) return;
+
+            const blob = new Blob([corruptedUint8Array], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            
+            const origName = currentFile ? currentFile.name.replace(/\.pdf$/i, '') : 'document';
+            const corruptedFileName = `${origName}_damaged.pdf`;
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = corruptedFileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            addLog(`Downloaded damaged file: "${corruptedFileName}"`, 'success');
+            showToast('Damaged PDF downloaded.');
+        }
+
+        // Drag & Drop Event Listeners
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-neonGreen', 'bg-neonGreen/5');
+        });
+
+        ['dragleave', 'dragend'].forEach(type => {
+            dropZone.addEventListener(type, () => {
+                dropZone.classList.remove('border-neonGreen', 'bg-neonGreen/5');
+            });
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-neonGreen', 'bg-neonGreen/5');
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        // Clear Selected File
+        removeFileBtn.addEventListener('click', () => {
+            currentFile = null;
+            originalArrayBuffer = null;
+            corruptedUint8Array = null;
+            fileInput.value = '';
+
+            fileInfo.classList.add('hidden');
+            corruptBtn.disabled = true;
+            downloadBtn.disabled = true;
+
+            hexContainer.classList.add('hidden');
+            hexEmpty.classList.remove('hidden');
+
+            addLog('Cleared file selection.', 'info');
+        });
+
+        // Corrupt and Download Buttons
+        corruptBtn.addEventListener('click', corruptHeader);
+        downloadBtn.addEventListener('click', downloadCorruptedFile);
+    </script>
+</body>
+</html>
